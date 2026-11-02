@@ -1,3 +1,26 @@
+/* ===== Schriften (lokal, keine Verbindung zu Google) – SIL Open Font License ===== */
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../fonts/cormorant-garamond.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../fonts/cormorant-garamond-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Mulish";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("../fonts/mulish.woff2") format("woff2");
+}
+
 /* ===== Farben & Grundwerte ===== */
 :root {
   --forest-deep: #13241b;   /* tiefes Dunkelgrün */
@@ -459,6 +482,29 @@ blockquote {
 .footer p { margin: 0; }
 .footer a { text-decoration: none; }
 .footer a:hover { color: var(--bronze-light); }
+
+/* ===== Impressum & Datenschutz ===== */
+.legal {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 8rem var(--gutter) 5rem;
+}
+.legal h1 { font-size: clamp(2.4rem, 1.8rem + 3vw, 3.8rem); hyphens: manual; }
+.legal h2 { font-size: 1.6rem; margin-top: 2.6rem; color: var(--bronze-light); }
+.legal p { color: var(--cream-dim); }
+.legal a { color: var(--cream); text-decoration-color: var(--bronze); text-underline-offset: 3px; }
+.legal__back {
+  display: inline-block;
+  margin-bottom: 3rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  color: var(--bronze-light) !important;
+}
+.legal__date { margin-top: 3rem; font-size: 0.9em; }
+/* Platzhalter in den Vorlagen – nach dem Ausfüllen entfernen */
+.ph { background: rgba(179, 138, 85, 0.22); color: var(--bronze-light); border-radius: 3px; padding: 0 0.3em; }
 
 /* ===== Einblend-Animationen ===== */
 .reveal {
