@@ -1,0 +1,49 @@
+/* Bearbeitungsleiste – nur im lokalen Bearbeitungsmodus sichtbar */
+.ed-bar {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 200;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 0.8rem;
+  background: rgba(19, 36, 27, 0.95);
+  border: 1px solid var(--bronze);
+  border-radius: 999px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  font: 400 0.85rem/1.2 var(--sans);
+  color: var(--cream);
+}
+.ed-bar button {
+  font: 600 0.78rem/1 var(--sans);
+  letter-spacing: 0.06em;
+  padding: 0.6em 1.1em;
+  border-radius: 999px;
+  border: 1px solid var(--bronze);
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+}
+.ed-bar button:hover { background: rgba(179, 138, 85, 0.2); }
+.ed-bar .ed-save { background: var(--bronze); color: var(--forest-deep); }
+.ed-bar [hidden] { display: none; }
+.ed-count { color: var(--cream-dim); }
+.ed-msg:empty { display: none; }
+.ed-ok { color: #a9d4a0; }
+.ed-err { color: #f0a58c; }
+
+body.ed-on [data-edit] {
+  outline: 1px dashed rgba(212, 171, 115, 0.45);
+  outline-offset: 4px;
+  border-radius: 2px;
+  cursor: text;
+  transition: outline-color 0.2s;
+}
+body.ed-on [data-edit]:hover { outline-color: var(--bronze-light); }
+body.ed-on [data-edit]:focus { outline: 2px solid var(--bronze-light); background: rgba(179, 138, 85, 0.08); }
+body.ed-on [data-edit].ed-changed { outline-style: solid; outline-color: #a9d4a0; }
+/* Beim Bearbeiten alles sofort sichtbar, ohne Einblend-Animation */
+body.ed-on .reveal { opacity: 1; transform: none; }
