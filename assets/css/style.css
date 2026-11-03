@@ -534,7 +534,8 @@ blockquote {
 }
 @media (max-width: 600px) {
   .brand { padding: 1rem var(--gutter); }
-  .brand__name span { display: none; }
+  .brand__name { display: inline-block; line-height: 1.1; }
+  .brand__name span { display: block; margin: 0.25em 0 0; font-size: 0.6rem; }
   .timeline { right: 0.5rem; }
   .about__image::before { inset: 1rem -0.75rem -0.75rem 1rem; }
   .gallery { columns: 2; column-gap: 0.6rem; }
