@@ -57,3 +57,4 @@ body.ed-on [data-edit]:focus { outline: 2px solid var(--bronze-light); backgroun
 body.ed-on [data-edit].ed-changed { outline-style: solid; outline-color: #a9d4a0; }
 /* Beim Bearbeiten alles sofort sichtbar, ohne Einblend-Animation */
 body.ed-on .reveal { opacity: 1; transform: none; }
+@media (max-width: 700px) { .ed-bar { bottom: 4.5rem; } }

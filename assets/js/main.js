@@ -75,8 +75,8 @@ document.querySelectorAll('.reveal').forEach((el) => {
 });
 
 // Zeitleiste: aktiven Abschnitt markieren und Fortschritt füllen
-const sections = [...document.querySelectorAll('main > section')];
 const links = [...document.querySelectorAll('.timeline a')];
+const sections = links.map((a) => document.getElementById(a.dataset.target));
 const fill = document.querySelector('.timeline__fill');
 
 function updateTimeline() {
@@ -95,6 +95,13 @@ function updateTimeline() {
 // Leichter Parallax-Effekt im Startbild
 const heroBg = document.querySelector('.hero__bg');
 const brand = document.querySelector('.brand');
+const stickyCta = document.getElementById('sticky-cta');
+
+// Fester Handy-Button: erst nach dem Startbild, und nicht mehr beim Kontakt
+function updateStickyCta() {
+  const contactTop = document.getElementById('kontakt').getBoundingClientRect().top;
+  stickyCta.classList.toggle('is-visible', window.scrollY > window.innerHeight * 0.7 && contactTop > window.innerHeight * 0.7);
+}
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let ticking = false;
@@ -104,6 +111,7 @@ window.addEventListener('scroll', () => {
   requestAnimationFrame(() => {
     updateTimeline();
     brand.classList.toggle('is-scrolled', window.scrollY > 80);
+    updateStickyCta();
     if (!reduceMotion && window.scrollY < window.innerHeight) {
       heroBg.style.translate = `0 ${window.scrollY * 0.25}px`;
     }
@@ -113,13 +121,50 @@ window.addEventListener('scroll', () => {
 window.addEventListener('resize', updateTimeline);
 updateTimeline();
 
-// Kontaktformular: öffnet das E-Mail-Programm (funktioniert ohne Server, z. B. auf GitHub Pages)
-document.getElementById('contact-form').addEventListener('submit', (e) => {
+// Kontaktwege: Buttons erscheinen, sobald sie in kontakt-einstellungen.js eingetragen sind
+const whatsappBtn = document.getElementById('contact-whatsapp');
+const terminBtn = document.getElementById('contact-termin');
+if (KONTAKT.whatsapp) {
+  const text = 'Hallo Timo, ich habe Deine Website gesehen und hätte Lust auf ein kurzes Kennenlerngespräch.';
+  whatsappBtn.href = `https://wa.me/${KONTAKT.whatsapp}?text=${encodeURIComponent(text)}`;
+  whatsappBtn.hidden = false;
+}
+if (KONTAKT.terminUrl) {
+  terminBtn.href = KONTAKT.terminUrl;
+  terminBtn.hidden = false;
+}
+document.getElementById('contact-ways').hidden = !KONTAKT.whatsapp && !KONTAKT.terminUrl;
+
+// Kontaktformular: sendet an den Formular-Dienst, ohne Dienst öffnet es das E-Mail-Programm
+const contactForm = document.getElementById('contact-form');
+const contactNote = document.getElementById('contact-note');
+contactNote.textContent = KONTAKT.formularUrl
+  ? 'Deine Angaben nutze ich nur, um Dir zu antworten.'
+  : 'Öffnet Dein E-Mail-Programm mit Deiner Nachricht.';
+
+contactForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const f = new FormData(e.target);
-  const subject = `Anfrage: ${f.get('anlass')} – ${f.get('name')}`;
-  const body = `${f.get('nachricht')}\n\n${f.get('name')}\n${f.get('email')}`;
-  window.location.href = `mailto:hallo@deine-domain.de?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const f = new FormData(contactForm);
+  if (!KONTAKT.formularUrl) {
+    const subject = `Kennenlerngespräch: ${f.get('name')}`;
+    const body = `${f.get('wunsch')}\n\n${f.get('name')}\n${f.get('kontakt')}`;
+    window.location.href = `mailto:${KONTAKT.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return;
+  }
+  const button = contactForm.querySelector('button');
+  button.disabled = true;
+  try {
+    const res = await fetch(KONTAKT.formularUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(Object.fromEntries(f)),
+    });
+    if (!res.ok) throw new Error(res.status);
+    contactForm.innerHTML = '<h3>Danke Dir!</h3><p>Deine Nachricht ist angekommen. Ich melde mich innerhalb von zwei Tagen persönlich bei Dir.</p>';
+  } catch {
+    button.disabled = false;
+    contactNote.textContent = `Das hat leider nicht geklappt. Schreib mir gern direkt an ${KONTAKT.email}.`;
+  }
 });
 
 document.getElementById('year').textContent = new Date().getFullYear();

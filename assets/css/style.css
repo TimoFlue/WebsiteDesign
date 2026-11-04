@@ -487,6 +487,55 @@ blockquote {
 .footer a { text-decoration: none; }
 .footer a:hover { color: var(--bronze-light); }
 
+/* ===== Einladung zum Kennenlerngespräch ===== */
+.cta { text-align: center; margin: clamp(4rem, 8vw, 6rem) auto 0; max-width: 640px; }
+.cta__line { font-family: var(--serif); font-size: clamp(1.5rem, 1.3rem + 1vw, 2.1rem); line-height: 1.25; margin-bottom: 1.2em; }
+.cta__small, .hero__reassure { font-size: 0.85rem; color: var(--cream-dim); margin: 1em 0 0; }
+
+.sticky-cta {
+  position: fixed;
+  left: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 45;
+  display: none;
+  padding: 0.95em 1.5em;
+  border-radius: 999px;
+  background: var(--bronze);
+  color: var(--forest-deep);
+  font: 600 0.74rem/1 var(--sans);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease), visibility 0.4s;
+}
+.sticky-cta.is-visible { opacity: 1; visibility: visible; transform: none; }
+@media (max-width: 700px) { .sticky-cta { display: block; } }
+
+/* ===== Häufige Bedenken ===== */
+.doubts { background: var(--forest); }
+.doubts__grid {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(2rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem);
+}
+.doubt { border-top: 1px solid rgba(179, 138, 85, 0.45); padding-top: 1.4rem; }
+.doubt h3 { font-style: italic; color: var(--bronze-light); margin-bottom: 0.5em; }
+.doubt p { color: var(--cream-dim); margin: 0; }
+
+/* ===== Kontaktwege ===== */
+.contact__ways { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.6rem; }
+.contact__ways[hidden], .contact__ways [hidden] { display: none; }
+.contact__trap { position: absolute; left: -9999px; opacity: 0; }
+.contact__form h3 { color: var(--bronze-light); margin: 0; }
+.contact__form > p:not(.contact__note) { color: var(--cream-dim); margin: 0; }
+.contact__form button[disabled] { opacity: 0.6; cursor: default; }
+
 /* ===== Impressum & Datenschutz ===== */
 .legal {
   max-width: 760px;
@@ -530,7 +579,7 @@ blockquote {
   .section, .hero { padding-right: calc(var(--gutter) + 1.5rem); }
   .about__grid, .contact__inner { grid-template-columns: 1fr; }
   .about__image { max-width: 420px; margin: 0 auto; }
-  .values, .journey, .offers { grid-template-columns: 1fr; }
+  .values, .journey, .offers, .doubts__grid { grid-template-columns: 1fr; }
   .journey::before { display: none; }
   .offers { max-width: 480px; }
   .timeline__label { display: none; }
