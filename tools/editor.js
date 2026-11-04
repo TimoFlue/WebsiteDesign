@@ -9,6 +9,7 @@
   bar.className = 'ed-bar';
   bar.innerHTML = `
     <button type="button" class="ed-toggle">✎ Texte bearbeiten</button>
+    <a class="ed-link" href="/tools/sortieren.html">⇅ Fotos sortieren</a>
     <span class="ed-count"></span>
     <button type="button" class="ed-save" hidden>Speichern</button>
     <button type="button" class="ed-undo" hidden>Verwerfen</button>

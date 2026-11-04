@@ -11,12 +11,15 @@ Server die Leiste einfügt.
 
 import hashlib
 import json
+import re
 from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PORT = 8080
+ORDER_FILE = ROOT / "assets/js/galerie-reihenfolge.js"
+ORDER_LINE = re.compile(r"const GALLERY_ORDER = (\[[^\]]*\]);")
 EDITABLE = {"h1", "h2", "h3", "p", "li", "blockquote"}
 SKIP_INSIDE = {"form", "nav", "header", "footer", "script", "button"}
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
@@ -120,7 +123,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         p = page_path(self.path)
-        if p and p.exists():
+        if p and p.exists() and p.parent != ROOT / "tools":
             body = annotate(p.read_text(encoding="utf-8")).encode()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -130,10 +133,26 @@ class Handler(SimpleHTTPRequestHandler):
             return
         super().do_GET()
 
+    def save_order(self, data):
+        """Schreibt die neue Foto-Reihenfolge, nur wenn es dieselben Fotos sind."""
+        source = ORDER_FILE.read_text(encoding="utf-8")
+        match = ORDER_LINE.search(source)
+        current = json.loads(match.group(1))
+        order = data.get("order")
+        if not isinstance(order, list) or sorted(order) != sorted(current):
+            return self.reply(400, {"error": "Die Fotoliste passt nicht. Bitte Seite neu laden."})
+        ORDER_FILE.write_text(
+            source[:match.start(1)] + json.dumps(order) + source[match.end(1):], encoding="utf-8"
+        )
+        print(f"Gespeichert: Reihenfolge von {len(order)} Fotos", flush=True)
+        self.reply(200, {"ok": True})
+
     def do_POST(self):
-        if self.path != "/__save":
+        if self.path not in ("/__save", "/__order"):
             return self.reply(404, {"error": "Unbekannt"})
         data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+        if self.path == "/__order":
+            return self.save_order(data)
         p = page_path(data.get("page", ""))
         if not p or not p.exists():
             return self.reply(400, {"error": "Seite nicht gefunden"})

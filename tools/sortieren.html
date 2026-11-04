@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fotos sortieren</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#13241b">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .sort-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1rem;
+      padding: 1rem clamp(1rem, 3vw, 2rem);
+      background: rgba(19, 36, 27, 0.96);
+      border-bottom: 1px solid rgba(179, 138, 85, 0.4);
+    }
+    .sort-bar h1 { font-size: 1.7rem; margin: 0; }
+    .sort-bar__status { flex: 1 1 12rem; font-size: 0.9rem; color: var(--cream-dim); }
+    .sort-bar__status.is-ok { color: #a9d4a0; }
+    .sort-bar__status.is-err { color: #f0a58c; }
+    .sort-bar__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .sort-bar .btn { padding: 0.8em 1.3em; font-size: 0.72rem; }
+    .sort-bar .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+    .sort-help { margin: 0; padding: 1.2rem clamp(1rem, 3vw, 2rem) 0; color: var(--cream-dim); }
+
+    .sort-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.8rem;
+      padding: 1.2rem clamp(1rem, 3vw, 2rem) 4rem;
+      user-select: none;
+    }
+    .sort-card {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--forest);
+      cursor: grab;
+      touch-action: none;
+    }
+    .sort-card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .sort-card__num {
+      position: absolute;
+      top: 0.4rem;
+      left: 0.4rem;
+      min-width: 1.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      background: rgba(19, 36, 27, 0.88);
+      color: var(--bronze-light);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .sort-card__move {
+      position: absolute;
+      inset: auto 0.4rem 0.4rem;
+      display: flex;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .sort-card:hover .sort-card__move, .sort-card:focus-within .sort-card__move { opacity: 1; }
+    .sort-card__move button {
+      width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(19, 36, 27, 0.88);
+      color: var(--cream);
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .sort-card__move button:hover { background: var(--bronze); color: var(--forest-deep); }
+    .sort-card.is-dragging {
+      z-index: 30;
+      cursor: grabbing;
+      pointer-events: none;
+      outline: 2px solid var(--bronze-light);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+    }
+    .sort-divider {
+      grid-column: 1 / -1;
+      padding: 0.6rem 0;
+      border-top: 1px dashed var(--bronze);
+      border-bottom: 1px dashed var(--bronze);
+      color: var(--bronze-light);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="sort-bar">
+    <h1>Fotos sortieren</h1>
+    <p class="sort-bar__status" id="status" role="status" aria-live="polite"></p>
+    <div class="sort-bar__actions">
+      <a class="btn btn--ghost" href="../index.html#portfolio">← Zur Website</a>
+      <button class="btn btn--ghost" id="shuffle" type="button">Zufällig mischen</button>
+      <button class="btn btn--ghost" id="reset" type="button" disabled>Zurücksetzen</button>
+      <button class="btn btn--bronze" id="save" type="button" disabled>Speichern</button>
+    </div>
+  </header>
+
+  <p class="sort-help">Zieh ein Foto an die gewünschte Stelle, oder nimm für kleine Schritte die Pfeile auf dem Foto. Die Reihenfolge läuft wie auf der Website: von links nach rechts, Zeile für Zeile.</p>
+  <main class="sort-grid" id="grid"></main>
+
+  <script src="../assets/js/galerie-reihenfolge.js"></script>
+  <script>
+    const grid = document.getElementById('grid');
+    const statusEl = document.getElementById('status');
+    const saveBtn = document.getElementById('save');
+    const resetBtn = document.getElementById('reset');
+    const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+
+    let saved = [...GALLERY_ORDER];
+    let order = [...GALLERY_ORDER];
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const isDirty = () => order.join() !== saved.join();
+
+    const divider = document.createElement('div');
+    divider.className = 'sort-divider';
+    divider.textContent = 'Ab hier erst sichtbar nach Klick auf „Alle Arbeiten zeigen“';
+
+    const cards = new Map(order.map((n) => {
+      const card = document.createElement('div');
+      card.className = 'sort-card';
+      card.dataset.photo = n;
+      card.innerHTML = `
+        <img src="../assets/img/galerie/g${pad(n)}-s.webp" alt="Foto ${n}" draggable="false">
+        <span class="sort-card__num"></span>
+        <div class="sort-card__move">
+          <button type="button" data-step="-1" aria-label="Foto ${n} eine Stelle nach vorne">←</button>
+          <button type="button" data-step="1" aria-label="Foto ${n} eine Stelle nach hinten">→</button>
+        </div>`;
+      return [n, card];
+    }));
+
+    function setStatus(text, kind = '') {
+      statusEl.textContent = text;
+      statusEl.className = `sort-bar__status ${kind && `is-${kind}`}`;
+    }
+
+    function render() {
+      order.forEach((n, i) => {
+        const card = cards.get(n);
+        card.querySelector('.sort-card__num').textContent = i + 1;
+        grid.appendChild(card);
+        if (i + 1 === GALLERY_VISIBLE && order.length > GALLERY_VISIBLE) grid.appendChild(divider);
+      });
+      saveBtn.disabled = !isDirty() || !isLocal;
+      resetBtn.disabled = !isDirty();
+    }
+
+    function changed() {
+      render();
+      setStatus(isDirty() ? 'Ungespeicherte Änderungen' : '');
+    }
+
+    function move(photo, toIndex) {
+      order.splice(order.indexOf(photo), 1);
+      order.splice(toIndex, 0, photo);
+    }
+
+    // Pfeile auf dem Foto
+    grid.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-step]');
+      if (!btn) return;
+      const photo = Number(btn.closest('.sort-card').dataset.photo);
+      const to = order.indexOf(photo) + Number(btn.dataset.step);
+      if (to < 0 || to >= order.length) return;
+      move(photo, to);
+      changed();
+      btn.focus();
+    });
+
+    // Ziehen mit Maus oder Finger
+    let drag = null;
+
+    grid.addEventListener('pointerdown', (e) => {
+      const card = e.target.closest('.sort-card');
+      if (!card || e.target.closest('button') || e.button !== 0) return;
+      const rect = card.getBoundingClientRect();
+      drag = { card, photo: Number(card.dataset.photo), grabX: e.clientX - rect.left, grabY: e.clientY - rect.top, startX: e.clientX, startY: e.clientY, active: false };
+    });
+
+    function placeDragged(x, y) {
+      const { card, grabX, grabY } = drag;
+      card.style.transform = 'none';
+      const rect = card.getBoundingClientRect();
+      card.style.transform = `translate(${x - grabX - rect.left}px, ${y - grabY - rect.top}px) scale(1.04)`;
+    }
+
+    window.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      if (!drag.active) {
+        if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 6) return;
+        drag.active = true;
+        drag.card.classList.add('is-dragging');
+      }
+      drag.x = e.clientX;
+      drag.y = e.clientY;
+
+      const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.sort-card');
+      if (target && target !== drag.card) {
+        move(drag.photo, order.indexOf(Number(target.dataset.photo)));
+        render();
+      }
+      placeDragged(e.clientX, e.clientY);
+
+      // Am Fensterrand automatisch weiterscrollen
+      const edge = 80;
+      drag.scroll = e.clientY < edge ? -12 : e.clientY > innerHeight - edge ? 12 : 0;
+      if (drag.scroll && !drag.scrolling) {
+        drag.scrolling = true;
+        const tick = () => {
+          if (!drag?.scroll) { if (drag) drag.scrolling = false; return; }
+          window.scrollBy(0, drag.scroll);
+          placeDragged(drag.x, drag.y);
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+    });
+
+    function endDrag() {
+      if (!drag) return;
+      const wasActive = drag.active;
+      drag.card.classList.remove('is-dragging');
+      drag.card.style.transform = '';
+      drag = null;
+      if (wasActive) changed();
+    }
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+
+    document.getElementById('shuffle').addEventListener('click', () => {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      changed();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      order = [...saved];
+      changed();
+    });
+
+    async function save() {
+      if (!isDirty() || !isLocal) return;
+      try {
+        const res = await fetch('/__order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order }),
+        });
+        const data = await res.json();
+        if (!res.ok) return setStatus(data.error || 'Speichern fehlgeschlagen', 'err');
+        saved = [...order];
+        render();
+        setStatus('Gespeichert ✓ Sag Claude „hochladen“, um es online zu stellen.', 'ok');
+      } catch {
+        setStatus('Server nicht erreichbar. Läuft der Bearbeitungsmodus noch?', 'err');
+      }
+    }
+    saveBtn.addEventListener('click', save);
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
+    });
+    window.addEventListener('beforeunload', (e) => {
+      if (isDirty()) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    render();
+    if (!isLocal) setStatus('Speichern geht nur im lokalen Bearbeitungsmodus (Bearbeiten.command).', 'err');
+  </script>
+</body>
+</html>

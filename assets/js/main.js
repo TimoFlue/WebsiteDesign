@@ -1,13 +1,8 @@
-// Galerie: stärkste Bilder zuerst, der Rest erscheint über „Alle Arbeiten zeigen“
-const FEATURED = [38, 33, 31, 30, 22, 27, 29, 18, 10, 21, 36, 8, 11, 35, 39];
-const INITIAL = FEATURED.length;
-const ALL = [...FEATURED];
-for (let i = 1; i <= 39; i++) if (!ALL.includes(i)) ALL.push(i);
-
+// Galerie: Reihenfolge steht in galerie-reihenfolge.js, der Rest erscheint über „Alle Arbeiten zeigen“
 const gallery = document.getElementById('gallery');
 const pad = (n) => String(n).padStart(2, '0');
 
-ALL.forEach((n, idx) => {
+GALLERY_ORDER.forEach((n, idx) => {
   const btn = document.createElement('button');
   btn.className = 'gallery__item reveal';
   btn.type = 'button';
@@ -15,7 +10,7 @@ ALL.forEach((n, idx) => {
   btn.dataset.index = idx;
   btn.setAttribute('aria-label', `Bild ${idx + 1} vergrößern`);
   btn.innerHTML = `<img src="assets/img/galerie/g${pad(n)}-s.webp" alt="Fotografie von Timo, Bild ${idx + 1}" loading="lazy">`;
-  if (idx >= INITIAL) btn.hidden = true;
+  if (idx >= GALLERY_VISIBLE) btn.hidden = true;
   gallery.appendChild(btn);
 });
 

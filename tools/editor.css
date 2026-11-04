@@ -28,6 +28,16 @@
   cursor: pointer;
 }
 .ed-bar button:hover { background: rgba(179, 138, 85, 0.2); }
+.ed-bar .ed-link {
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  padding: 0.6em 1.1em;
+  border-radius: 999px;
+  border: 1px solid var(--bronze);
+  text-decoration: none;
+}
+.ed-bar .ed-link:hover { background: rgba(179, 138, 85, 0.2); }
 .ed-bar .ed-save { background: var(--bronze); color: var(--forest-deep); }
 .ed-bar [hidden] { display: none; }
 .ed-count { color: var(--cream-dim); }
