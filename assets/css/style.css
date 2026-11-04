@@ -200,7 +200,7 @@ p { margin: 0 0 1.2em; }
 .section {
   position: relative;
   padding: clamp(5rem, 12vw, 10rem) var(--gutter);
-  padding-right: calc(var(--gutter) + 7rem);
+  padding-right: calc(var(--gutter) + 11.5rem);
 }
 .section__head { max-width: 760px; margin: 0 auto clamp(3rem, 6vw, 5rem); text-align: center; }
 .section__lead { color: var(--cream-dim); }
