@@ -3,7 +3,7 @@
 (() => {
   // Einstellungen zum Feintuning
   const STRENGTH = { 1: 0.24, 2: 0.2 }; // Helligkeit des Lichts (0 = unsichtbar)
-  const SPEED = 0.55;      // Tempo der Bewegung
+  const SPEED = { 1: 0.55, 2: 0.825 }; // Tempo der Bewegung
   const SCALE = { 1: 1.7, 2: 2.5 }; // größer = kleinere, mehr Lichtflecken
   const MAX_WIDTH = 720;   // interne Auflösung, das Licht ist ohnehin weich
   const FPS = 30;
@@ -193,7 +193,7 @@
   // Startet an zufälliger Stelle im Ablauf, damit das Bild nicht immer gleich beginnt
   const offset = Math.random() * 500;
   function draw(ms) {
-    gl.uniform1f(uTime, offset + (ms / 1000) * SPEED);
+    gl.uniform1f(uTime, offset + (ms / 1000) * SPEED[variant]);
     gl.uniform1f(uScroll, -(scrollY / innerHeight) * 0.12); // Licht wandert beim Scrollen leicht mit
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
