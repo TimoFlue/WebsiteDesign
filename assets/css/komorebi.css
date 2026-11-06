@@ -1,0 +1,26 @@
+/* Komorebi-Test: Lichtebene liegt über den Hintergründen, Inhalte liegen darüber */
+.komorebi {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero__content,
+.about__grid,
+.values,
+.section__head,
+.journey,
+.offers,
+.gallery,
+.gallery__more,
+.cta,
+.doubts__grid,
+.contact__inner,
+.footer {
+  position: relative;
+  z-index: 2;
+}
+.scroll-hint { z-index: 2; }
