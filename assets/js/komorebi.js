@@ -1,13 +1,16 @@
-// Komorebi-Test: Sonnenlicht, das durch Blätter fällt. Zum Vergleichen: Seite mit ?komorebi=aus aufrufen.
+// Komorebi-Test: Sonnenlicht, das durch Blätter fällt.
+// Zum Vergleichen: ?komorebi=aus (ohne Effekt) oder ?komorebi=1 (erste Variante); Standard ist Variante 2.
 (() => {
   // Einstellungen zum Feintuning
-  const STRENGTH = 0.24;   // Helligkeit des Lichts (0 = unsichtbar)
+  const STRENGTH = { 1: 0.24, 2: 0.2 }; // Helligkeit des Lichts (0 = unsichtbar)
   const SPEED = 0.55;      // Tempo der Bewegung
-  const SCALE = 1.7;       // größer = kleinere, mehr Lichtflecken
+  const SCALE = { 1: 1.7, 2: 2.5 }; // größer = kleinere, mehr Lichtflecken
   const MAX_WIDTH = 720;   // interne Auflösung, das Licht ist ohnehin weich
   const FPS = 30;
 
-  if (new URLSearchParams(location.search).get('komorebi') === 'aus') return;
+  const param = new URLSearchParams(location.search).get('komorebi');
+  if (param === 'aus') return;
+  const variant = param === '1' ? 1 : 2;
 
   const canvas = document.createElement('canvas');
   canvas.className = 'komorebi';
@@ -19,7 +22,7 @@
     attribute vec2 pos;
     void main() { gl_Position = vec4(pos, 0.0, 1.0); }`;
 
-  const fragmentSrc = `
+  const common = `
     #ifdef GL_FRAGMENT_PRECISION_HIGH
     precision highp float;
     #else
@@ -44,6 +47,10 @@
       return 0.55 * noise(p) + 0.3 * noise(p * 2.1 + 3.7) + 0.15 * noise(p * 4.3 + 9.1);
     }
 
+`;
+
+  // Variante 1: einzelne Lichtflecken, die wandern und blinken
+  const variantOne = `
     // Weiche Lichtflecken: jede Lücke im Blätterdach wirft ein rundes Abbild der Sonne,
     // das mit dem Ast schwankt und kurz verschwindet, wenn sich ein Blatt davor schiebt.
     float spots(vec2 p, float t, float seed) {
@@ -89,6 +96,54 @@
       gl_FragColor = vec4(color * alpha, alpha);
     }`;
 
+  // Variante 2: wie im Video. Lichtinseln bleiben fast am Platz, atmen und fließen
+  // zu großen Flächen mit breiten, weichen Rändern zusammen, Zweige werfen Schattenbänder.
+  const variantTwo = `
+    float blobs(vec2 p, float t, float seed) {
+      vec2 cell = floor(p);
+      float sum = 0.0;
+      for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+          vec2 id = cell + vec2(float(x), float(y));
+          vec2 r = hash2(id + seed);
+          float k = hash(id * 1.3 + seed + 2.7);
+          vec2 sway = 0.07 * vec2(sin(t * (0.35 + 0.5 * r.x) + r.y * 6.28),
+                                  cos(t * (0.3 + 0.5 * r.y) + r.x * 6.28));
+          vec2 d = p - (id + r + sway);
+          float radius = (0.28 + 0.34 * k) * (1.0 + 0.2 * sin(t * (0.25 + 0.4 * k) + k * 40.0));
+          sum += exp(-dot(d, d) / (radius * radius)) * (0.45 + 0.55 * k);
+        }
+      }
+      return sum;
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uRes.y;
+      uv.y += uScroll;
+      float t = uTime;
+
+      vec2 p = mat2(0.9, -0.44, 0.44, 0.9) * uv * uScale;
+
+      // Langsam wabernde Verzerrung macht die Ränder organisch, ohne dass etwas wandert
+      vec2 warp = vec2(noise(p * 1.4 + vec2(t * 0.06, 1.7)), noise(p * 1.4 + vec2(5.2, -t * 0.05))) - 0.5;
+      vec2 q = p + warp * 0.55;
+
+      float field = 0.8 * blobs(q, t, 0.0) + 0.42 * blobs(q * 2.1 + 3.1, t * 1.2, 11.0);
+      float light = smoothstep(0.44, 1.12, field);
+
+      // Schatten von Zweigen: weiche, geschwungene Bänder, die sich nur leicht wiegen
+      vec2 sway = 0.03 * vec2(sin(t * 0.31) + 0.5 * sin(t * 0.73), cos(t * 0.27));
+      vec2 b = p * 0.42 + warp * 0.2 + sway;
+      float branch = smoothstep(0.05, 0.0, abs(fbm(b + 7.3) - 0.5));
+      light *= 1.0 - 0.75 * branch;
+
+      vec3 color = mix(vec3(1.0, 0.80, 0.50), vec3(1.0, 0.94, 0.76), light);
+      float alpha = clamp(light, 0.0, 1.0) * uStrength;
+      gl_FragColor = vec4(color * alpha, alpha);
+    }`;
+
+  const fragmentSrc = common + (variant === 1 ? variantOne : variantTwo);
+
   function compile(type, src) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, src);
@@ -115,8 +170,8 @@
   const uRes = gl.getUniformLocation(program, 'uRes');
   const uTime = gl.getUniformLocation(program, 'uTime');
   const uScroll = gl.getUniformLocation(program, 'uScroll');
-  gl.uniform1f(gl.getUniformLocation(program, 'uStrength'), STRENGTH);
-  gl.uniform1f(gl.getUniformLocation(program, 'uScale'), SCALE);
+  gl.uniform1f(gl.getUniformLocation(program, 'uStrength'), STRENGTH[variant]);
+  gl.uniform1f(gl.getUniformLocation(program, 'uScale'), SCALE[variant]);
 
   function resize() {
     const ratio = innerHeight / innerWidth;
