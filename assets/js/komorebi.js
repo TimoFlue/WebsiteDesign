@@ -7,6 +7,7 @@
   const SCALE = { 1: 1.7, 2: 2.5 }; // größer = kleinere, mehr Lichtflecken
   const MAX_WIDTH = 720;   // interne Auflösung, das Licht ist ohnehin weich
   const FPS = 30;
+  const SCROLL_FOLLOW = 0.92; // wie stark das Licht beim Scrollen mitläuft (1 = genau wie die Seite)
   const FLICKER = 1;       // Variante 2: Zittern der Lichter (0 = aus, 2 = doppelt so stark)
 
   const param = new URLSearchParams(location.search).get('komorebi');
@@ -194,16 +195,20 @@
   const offset = Math.random() * 500;
   function draw(ms) {
     gl.uniform1f(uTime, offset + (ms / 1000) * SPEED[variant]);
-    gl.uniform1f(uScroll, -(scrollY / innerHeight) * 0.12); // Licht wandert beim Scrollen leicht mit
+    gl.uniform1f(uScroll, -(scrollY / innerHeight) * SCROLL_FOLLOW);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let last = 0;
+  let lastScroll = scrollY;
   function loop(ms) {
     requestAnimationFrame(loop);
-    if (document.hidden || ms - last < 1000 / FPS) return;
+    if (document.hidden) return;
+    // Beim Scrollen jedes Bild zeichnen, damit das Licht nicht hinter der Seite herruckelt
+    if (scrollY === lastScroll && ms - last < 1000 / FPS) return;
     last = ms;
+    lastScroll = scrollY;
     draw(ms);
   }
 
