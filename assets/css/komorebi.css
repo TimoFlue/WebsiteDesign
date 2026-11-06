@@ -10,6 +10,22 @@
   pointer-events: none;
 }
 
+/* Touch-Geräte: Licht hängt an der Seite, damit die Browserleisten es nicht verschieben */
+.komorebi-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+.komorebi-page .komorebi {
+  position: absolute;
+  height: 200vh;
+  height: 200lvh;
+}
+
 .hero__content,
 .about__grid,
 .values,

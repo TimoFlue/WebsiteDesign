@@ -8,6 +8,11 @@
   const MAX_WIDTH = 720;   // interne Auflösung, das Licht ist ohnehin weich
   const FPS = 30;
   const SCROLL_FOLLOW = 0.5; // wie stark das Licht beim Scrollen mitläuft (1 = genau wie die Seite)
+  const TOUCH_RESOLUTION = 0.6; // Touch-Geräte: geringere Auflösung spart Akku, das Licht ist ohnehin weich
+
+  // Touch-Geräte: Das Licht hängt an der Seite statt am Fenster. Fixierte Ebenen verschiebt der
+  // Browser dort mit, sobald seine Leisten ein- und ausfahren, das ließ das Licht springen.
+  const onPage = matchMedia('(hover: none) and (pointer: coarse)').matches;
   const FLICKER = 1;       // Variante 2: Zittern der Lichter (0 = aus, 2 = doppelt so stark)
 
   const param = new URLSearchParams(location.search).get('komorebi');
@@ -185,21 +190,33 @@
   function resize() {
     // Maße der Lichtebene statt des Fensters: Die ein- und ausfahrende Browserleiste
     // auf dem Handy ändert sie nicht, das Licht bleibt dabei also ruhig.
-    const width = Math.min(canvas.clientWidth, MAX_WIDTH);
+    const width = Math.round(Math.min(canvas.clientWidth, MAX_WIDTH) * (onPage ? TOUCH_RESOLUTION : 1));
     const height = Math.round(width * (canvas.clientHeight / canvas.clientWidth));
     if (width === canvas.width && height === canvas.height) return false;
     canvas.width = width;
     canvas.height = height;
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, onPage ? canvas.height / 2 : canvas.height);
     return true;
   }
 
   // Startet an zufälliger Stelle im Ablauf, damit das Bild nicht immer gleich beginnt
   const offset = Math.random() * 500;
+  // Die Ebene ist auf der Seite doppelt so hoch wie das Fenster und wird beim Scrollen
+  // unbemerkt nachgesetzt; das Muster bleibt dabei an derselben Stelle der Seite.
+  let top = 0;
+  function pageOffset() {
+    const height = canvas.clientHeight / 2;
+    if (Math.abs(scrollY - (top + height / 2)) > height / 4) {
+      top = Math.max(0, Math.round(scrollY - height / 2));
+      canvas.style.top = `${top}px`;
+    }
+    return -top / height;
+  }
+
   function draw(ms) {
     gl.uniform1f(uTime, offset + (ms / 1000) * SPEED[variant]);
-    gl.uniform1f(uScroll, -(scrollY / canvas.clientHeight) * SCROLL_FOLLOW);
+    gl.uniform1f(uScroll, onPage ? pageOffset() : -(scrollY / canvas.clientHeight) * SCROLL_FOLLOW);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -216,7 +233,17 @@
     draw(ms);
   }
 
-  document.body.prepend(canvas);
+  if (onPage) {
+    const wrap = document.createElement('div');
+    wrap.className = 'komorebi-page';
+    wrap.append(canvas);
+    document.body.prepend(wrap);
+    const fit = () => { wrap.style.height = `${document.body.offsetHeight}px`; };
+    new ResizeObserver(fit).observe(document.body);
+    fit();
+  } else {
+    document.body.prepend(canvas);
+  }
   canvas.width = 0; // damit die erste Größenmessung immer greift
   resize();
   addEventListener('resize', () => { if (resize() && still) draw(0); });
