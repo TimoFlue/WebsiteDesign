@@ -183,19 +183,23 @@
   gl.uniform1f(gl.getUniformLocation(program, 'uFlicker'), FLICKER);
 
   function resize() {
-    const ratio = innerHeight / innerWidth;
-    const width = Math.min(innerWidth, MAX_WIDTH);
+    // Maße der Lichtebene statt des Fensters: Die ein- und ausfahrende Browserleiste
+    // auf dem Handy ändert sie nicht, das Licht bleibt dabei also ruhig.
+    const width = Math.min(canvas.clientWidth, MAX_WIDTH);
+    const height = Math.round(width * (canvas.clientHeight / canvas.clientWidth));
+    if (width === canvas.width && height === canvas.height) return false;
     canvas.width = width;
-    canvas.height = Math.round(width * ratio);
+    canvas.height = height;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform2f(uRes, canvas.width, canvas.height);
+    return true;
   }
 
   // Startet an zufälliger Stelle im Ablauf, damit das Bild nicht immer gleich beginnt
   const offset = Math.random() * 500;
   function draw(ms) {
     gl.uniform1f(uTime, offset + (ms / 1000) * SPEED[variant]);
-    gl.uniform1f(uScroll, -(scrollY / innerHeight) * SCROLL_FOLLOW);
+    gl.uniform1f(uScroll, -(scrollY / canvas.clientHeight) * SCROLL_FOLLOW);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -212,9 +216,10 @@
     draw(ms);
   }
 
-  resize();
-  addEventListener('resize', () => { resize(); if (still) draw(0); });
   document.body.prepend(canvas);
+  canvas.width = 0; // damit die erste Größenmessung immer greift
+  resize();
+  addEventListener('resize', () => { if (resize() && still) draw(0); });
   if (still) {
     draw(0); // Bei „Bewegung reduzieren“ nur ein ruhiges Standbild
     addEventListener('scroll', () => draw(0), { passive: true });

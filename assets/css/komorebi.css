@@ -1,9 +1,11 @@
 /* Komorebi-Test: Lichtebene liegt über den Hintergründen, Inhalte liegen darüber */
 .komorebi {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100lvh; /* volle Höhe bei eingefahrener Browserleiste, ändert sich beim Scrollen nicht */
   z-index: 1;
   pointer-events: none;
 }
