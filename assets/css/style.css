@@ -113,6 +113,12 @@ p { margin: 0 0 1.2em; }
 .btn:hover { transform: translateY(-2px); }
 .btn--bronze { background: var(--bronze); color: var(--forest-deep); }
 .btn--bronze:hover { background: var(--bronze-light); }
+.btn--invite { transition: background 0.5s var(--ease), border-color 0.5s var(--ease), color 0.5s var(--ease), transform 0.4s var(--ease); }
+.btn--invite:hover, .btn--invite:focus-visible {
+  background: #2c5e33;
+  border-color: #4f8a56;
+  color: #eef7ea;
+}
 .btn--ghost { background: transparent; color: var(--cream); }
 .btn--ghost:hover { background: rgba(179, 138, 85, 0.18); }
 
@@ -231,6 +237,7 @@ p { margin: 0 0 1.2em; }
   padding: 7rem var(--gutter) 5rem;
   padding-right: calc(var(--gutter) + 7rem);
   overflow: hidden;
+  overflow: clip; /* verhindert, dass der Browser das Startbild intern verschiebt */
 }
 .hero__bg {
   position: absolute;
@@ -574,6 +581,10 @@ blockquote {
 .legal__date { margin-top: 3rem; font-size: 0.9em; }
 /* Platzhalter in den Vorlagen – nach dem Ausfüllen entfernen */
 .ph { background: rgba(179, 138, 85, 0.22); color: var(--bronze-light); border-radius: 3px; padding: 0 0.3em; }
+
+/* ===== Überschriften-Effekt: Buchstaben reagieren auf den Mauszeiger ===== */
+.vp-word { display: inline-block; white-space: nowrap; }
+.vp-letter { display: inline-block; text-align: center; }
 
 /* ===== Selbst gewählte Textfarben, Schriften und Größen (über den Bearbeitungsmodus) ===== */
 b, strong { font-weight: 700; }

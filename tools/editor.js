@@ -1,7 +1,9 @@
 // Bearbeitungsleiste – wird nur vom lokalen Editor-Server (tools/editor.py) eingefügt
 (() => {
   const els = [...document.querySelectorAll('[data-edit]')];
-  const original = new Map(els.map((el) => [el.dataset.edit, el.innerHTML]));
+  // Überschriften sind für den Maus-Effekt in Buchstaben zerlegt, verglichen und gespeichert wird der reine Text
+  const html = (el) => window.headingProximity?.plain(el) ?? el.innerHTML;
+  const original = new Map(els.map((el) => [el.dataset.edit, html(el)]));
   let version = window.__EDITOR_VERSION__;
   let editing = false;
 
@@ -34,18 +36,20 @@
   document.body.appendChild(bar);
   const $ = (s) => bar.querySelector(s);
 
-  const changed = () => els.filter((el) => el.innerHTML !== original.get(el.dataset.edit));
+  const changed = () => els.filter((el) => html(el) !== original.get(el.dataset.edit));
 
   function refresh() {
     const n = changed().length;
     $('.ed-count').textContent = editing ? (n ? `${n} Änderung${n > 1 ? 'en' : ''}` : 'Klicke auf einen Text') : '';
     $('.ed-save').hidden = !n;
     $('.ed-undo').hidden = !n;
-    els.forEach((el) => el.classList.toggle('ed-changed', el.innerHTML !== original.get(el.dataset.edit)));
+    els.forEach((el) => el.classList.toggle('ed-changed', html(el) !== original.get(el.dataset.edit)));
   }
 
   function setEditing(on) {
     editing = on;
+    if (on) window.headingProximity?.off();
+    else window.headingProximity?.on();
     document.body.classList.toggle('ed-on', on);
     els.forEach((el) => { el.contentEditable = on ? 'true' : 'false'; el.spellcheck = on; });
     bar.querySelectorAll('.ed-colors').forEach((group) => { group.hidden = !on; });
@@ -125,7 +129,7 @@
   async function save() {
     const list = changed();
     if (!list.length) return;
-    const changes = Object.fromEntries(list.map((el) => [el.dataset.edit, el.innerHTML]));
+    const changes = Object.fromEntries(list.map((el) => [el.dataset.edit, html(el)]));
     try {
       const res = await fetch('/__save', {
         method: 'POST',
@@ -135,7 +139,7 @@
       const data = await res.json();
       if (!res.ok) return message(data.error || 'Speichern fehlgeschlagen', false);
       version = data.version;
-      list.forEach((el) => original.set(el.dataset.edit, el.innerHTML));
+      list.forEach((el) => original.set(el.dataset.edit, html(el)));
       refresh();
       message(`Gespeichert ✓  Sag Claude „hochladen“, um es online zu stellen.`);
     } catch {
@@ -144,7 +148,9 @@
   }
 
   function discard() {
+    window.headingProximity?.off();
     changed().forEach((el) => { el.innerHTML = original.get(el.dataset.edit); });
+    if (!editing) window.headingProximity?.on();
     refresh();
     message('Änderungen verworfen');
   }
