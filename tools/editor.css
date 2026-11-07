@@ -12,7 +12,7 @@
   padding: 0.6rem 0.8rem;
   background: rgba(19, 36, 27, 0.95);
   border: 1px solid var(--bronze);
-  border-radius: 999px;
+  border-radius: 1.6rem;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   font: 400 0.85rem/1.2 var(--sans);
   color: var(--cream);
@@ -40,6 +40,9 @@
 .ed-bar .ed-link:hover { background: rgba(179, 138, 85, 0.2); }
 .ed-bar .ed-save { background: var(--bronze); color: var(--forest-deep); }
 .ed-bar [hidden] { display: none; }
+.ed-colors { display: inline-flex; gap: 0.3rem; }
+.ed-bar .ed-colors[hidden] { display: none; }
+.ed-colors [data-color="t-bronze"] { color: var(--bronze-light); }
 .ed-count { color: var(--cream-dim); }
 .ed-msg:empty { display: none; }
 .ed-ok { color: #a9d4a0; }

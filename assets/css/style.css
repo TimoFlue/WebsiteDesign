@@ -21,6 +21,21 @@
   src: url("../fonts/mulish.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("../fonts/playfair-display.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Playfair Display";
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("../fonts/playfair-display-italic.woff2") format("woff2");
+}
+
 /* ===== Farben & Grundwerte ===== */
 :root {
   --forest-deep: #13241b;   /* tiefes Dunkelgrün */
@@ -34,6 +49,7 @@
 
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Mulish", system-ui, sans-serif;
+  --highlight: "Playfair Display", Georgia, serif;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --gutter: clamp(1rem, 5vw, 4rem);
   --max: 1180px;
@@ -558,6 +574,18 @@ blockquote {
 .legal__date { margin-top: 3rem; font-size: 0.9em; }
 /* Platzhalter in den Vorlagen – nach dem Ausfüllen entfernen */
 .ph { background: rgba(179, 138, 85, 0.22); color: var(--bronze-light); border-radius: 3px; padding: 0 0.3em; }
+
+/* ===== Selbst gewählte Textfarben, Schriften und Größen (über den Bearbeitungsmodus) ===== */
+b, strong { font-weight: 700; }
+.t-bronze { color: var(--bronze-light); }
+.t-weiss { color: var(--cream); }
+.t-bronze em, .t-weiss em { color: inherit; }
+.t-serif { font-family: var(--serif); }
+.t-sans { font-family: var(--sans); }
+.t-playfair { font-family: var(--highlight); }
+.t-klein { font-size: 0.85em; }
+.t-gross { font-size: 1.25em; }
+.t-xgross { font-size: 1.6em; }
 
 /* ===== Einblend-Animationen ===== */
 .reveal {
