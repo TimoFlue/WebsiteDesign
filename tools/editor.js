@@ -12,6 +12,7 @@
   bar.innerHTML = `
     <button type="button" class="ed-toggle">✎ Texte bearbeiten</button>
     <a class="ed-link" href="/tools/sortieren.html">⇅ Fotos sortieren</a>
+    <a class="ed-link" href="/tools/leistungen.html">☰ Leistungen bearbeiten</a>
     <span class="ed-colors" hidden>
       <button type="button" data-color="t-bronze" title="Markierten Text bronze färben (Ctrl + B)">Bronze</button>
       <button type="button" data-color="t-weiss" title="Markierten Text weiß färben (Ctrl + W)">Weiß</button>

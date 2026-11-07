@@ -98,7 +98,7 @@
       light *= mix(0.22, 1.0, canopy);
       light = clamp(light, 0.0, 1.0);
 
-      vec3 color = mix(vec3(1.0, 0.80, 0.50), vec3(1.0, 0.94, 0.76), light);
+      vec3 color = mix(vec3(1.0, 0.68, 0.34), vec3(1.0, 0.87, 0.60), light); // warmes Goldlicht
       float alpha = light * uStrength;
       gl_FragColor = vec4(color * alpha, alpha);
     }`;
@@ -150,7 +150,7 @@
       float branch = smoothstep(0.05, 0.0, abs(fbm(b + 7.3) - 0.5));
       light *= 1.0 - 0.75 * branch;
 
-      vec3 color = mix(vec3(1.0, 0.80, 0.50), vec3(1.0, 0.94, 0.76), light);
+      vec3 color = mix(vec3(1.0, 0.68, 0.34), vec3(1.0, 0.87, 0.60), light); // warmes Goldlicht
       float alpha = clamp(light, 0.0, 1.0) * uStrength;
       gl_FragColor = vec4(color * alpha, alpha);
     }`;

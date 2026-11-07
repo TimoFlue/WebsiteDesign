@@ -142,6 +142,12 @@ contactNote.textContent = KONTAKT.formularUrl
   ? 'Deine Angaben nutze ich nur, um Dir zu antworten.'
   : 'Öffnet Dein E-Mail-Programm mit Deiner Nachricht.';
 
+// Kommt jemand über „Diese Auszeit anfragen“, steht die Leistung schon im Wunschfeld
+const chosenOffer = new URLSearchParams(location.search).get('leistung');
+if (chosenOffer && !contactForm.wunsch.value) {
+  contactForm.wunsch.value = `Ich interessiere mich für „${chosenOffer.slice(0, 80)}“. `;
+}
+
 contactForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = new FormData(contactForm);

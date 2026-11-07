@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leistungen bearbeiten</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#13241b">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    body { font-size: 1rem; }
+    .le-bar {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem;
+      padding: 1rem clamp(1rem, 3vw, 2rem);
+      background: rgba(19, 36, 27, 0.97);
+      border-bottom: 1px solid rgba(179, 138, 85, 0.4);
+    }
+    .le-bar h1 { font-size: 1.7rem; margin: 0; }
+    .le-status { flex: 1 1 12rem; font-size: 0.9rem; color: var(--cream-dim); }
+    .le-status.is-ok { color: #a9d4a0; }
+    .le-status.is-err { color: #f0a58c; }
+    .le-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .le-bar .btn, .le-small { padding: 0.8em 1.3em; font-size: 0.72rem; }
+    .btn[disabled] { opacity: 0.4; cursor: default; transform: none; }
+
+    .le-layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr) 360px;
+      gap: clamp(1rem, 2.5vw, 2rem);
+      padding: 1.5rem clamp(1rem, 3vw, 2rem) 5rem;
+      align-items: start;
+    }
+    @media (max-width: 1150px) { .le-layout { grid-template-columns: 240px minmax(0, 1fr); } .le-preview { grid-column: 2; } }
+    @media (max-width: 760px) { .le-layout { grid-template-columns: 1fr; } .le-preview { grid-column: auto; } }
+
+    .le-heading { font: 600 0.72rem/1 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--bronze-light); margin: 0 0 0.8rem; }
+    .le-hint { font-size: 0.82rem; color: var(--cream-dim); margin: 0.6rem 0 0; }
+
+    /* Liste der Leistungen */
+    .le-offers { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.45rem; }
+    .le-offer {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.45rem 0.6rem 0.45rem 0.4rem;
+      border-radius: 6px;
+      background: var(--forest);
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .le-offer.is-selected { border-color: var(--bronze-light); background: #24402f; }
+    .le-offer img { width: 46px; height: 46px; object-fit: cover; border-radius: 4px; flex: none; }
+    .le-offer__name { flex: 1; min-width: 0; line-height: 1.3; font-size: 0.92rem; }
+    .le-offer__name small { display: block; color: var(--cream-dim); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .le-handle {
+      flex: none; width: 1.6rem; align-self: stretch;
+      display: grid; place-items: center;
+      color: var(--sage); cursor: grab; touch-action: none; user-select: none;
+      font-size: 1.1rem; letter-spacing: -0.15em;
+    }
+    .le-handle:hover { color: var(--bronze-light); }
+    .is-dragging { opacity: 0.85; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); border-color: var(--bronze) !important; }
+    body.le-drag, body.le-drag * { cursor: grabbing !important; user-select: none; }
+
+    /* Formular */
+    .le-form { background: var(--forest); border-radius: 8px; padding: clamp(1.2rem, 2.5vw, 2rem); }
+    .le-form[hidden] { display: none; }
+    .le-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 560px) { .le-row { grid-template-columns: 1fr; } }
+    .le-field { display: block; margin-bottom: 1.1rem; font-size: 0.82rem; color: var(--cream-dim); }
+    .le-field input[type="text"], .le-field textarea, .le-point input {
+      display: block; width: 100%; margin-top: 0.35rem;
+      padding: 0.65rem 0.8rem;
+      font: 400 1rem/1.5 var(--sans); color: var(--cream);
+      background: rgba(19, 36, 27, 0.75);
+      border: 1px solid rgba(179, 138, 85, 0.35); border-radius: 5px;
+    }
+    .le-field textarea { resize: vertical; min-height: 5.5rem; }
+    .le-field input:focus, .le-field textarea:focus, .le-point input:focus { outline: none; border-color: var(--bronze-light); }
+    .le-check { display: flex; align-items: center; gap: 0.6rem; font-size: 0.92rem; margin-bottom: 1.2rem; cursor: pointer; }
+    .le-check input { width: 1.1rem; height: 1.1rem; accent-color: var(--bronze); }
+
+    .le-points { list-style: none; padding: 0; margin: 0.35rem 0 0.6rem; display: grid; gap: 0.4rem; }
+    .le-point { display: flex; align-items: center; gap: 0.4rem; border-radius: 5px; background: var(--forest); border: 1px solid transparent; }
+    .le-point input { margin: 0; }
+    .le-x {
+      flex: none; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+      border: 1px solid transparent; background: transparent; color: var(--cream-dim);
+      font-size: 1.2rem; cursor: pointer;
+    }
+    .le-x:hover { color: #f0a58c; border-color: rgba(240, 165, 140, 0.5); }
+    .le-ghost {
+      font: 600 0.72rem/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.7em 1.1em; border-radius: 999px; cursor: pointer;
+      border: 1px dashed rgba(179, 138, 85, 0.6); background: transparent; color: var(--bronze-light);
+    }
+    .le-ghost:hover { background: rgba(179, 138, 85, 0.12); }
+    .le-danger { border-color: rgba(240, 165, 140, 0.55); color: #f0a58c; border-style: solid; }
+    .le-danger:hover { background: rgba(240, 165, 140, 0.1); }
+
+    .le-picker summary { cursor: pointer; color: var(--bronze-light); font-size: 0.85rem; margin: 0.4rem 0 0.8rem; }
+    .le-current { display: flex; gap: 0.9rem; align-items: center; margin-top: 0.35rem; }
+    .le-current img { width: 90px; height: 68px; object-fit: cover; border-radius: 4px; }
+    .le-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 0.4rem; max-height: 320px; overflow: auto; padding: 0.2rem; }
+    .le-images button { padding: 0; border: 2px solid transparent; border-radius: 4px; overflow: hidden; cursor: pointer; aspect-ratio: 2 / 3; background: none; }
+    .le-images button.is-selected { border-color: var(--bronze-light); }
+    .le-images img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .le-form__foot { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1.6rem; padding-top: 1.2rem; border-top: 1px solid rgba(242, 236, 225, 0.1); }
+
+    /* Vorschau */
+    .le-preview { position: sticky; top: 6rem; }
+    .le-preview .offer { max-width: 360px; }
+    .le-preview .offer:hover { transform: none; }
+  </style>
+</head>
+<body>
+  <div class="le-bar">
+    <h1>Leistungen bearbeiten</h1>
+    <span class="le-status" id="status" role="status">Wird geladen …</span>
+    <div class="le-actions">
+      <a class="btn btn--ghost" href="/index.html#leistungen">Startseite</a>
+      <a class="btn btn--ghost" href="/leistungen.html">Leistungsseite</a>
+      <button class="btn btn--ghost" id="discard" type="button" disabled>Verwerfen</button>
+      <button class="btn btn--bronze" id="save" type="button" disabled>Speichern</button>
+    </div>
+  </div>
+
+  <div class="le-layout">
+    <aside>
+      <p class="le-heading">Reihenfolge</p>
+      <ul class="le-offers" id="offers"></ul>
+      <p class="le-hint">Am Griff ⋮⋮ ziehen, um die Reihenfolge zu ändern. Die ersten drei sind auf dem Desktop sofort sichtbar.</p>
+      <p style="margin-top:1rem"><button class="le-ghost" id="add" type="button">+ Neue Leistung</button></p>
+    </aside>
+
+    <form class="le-form" id="form" autocomplete="off" hidden>
+      <div class="le-row">
+        <label class="le-field">Titel<input type="text" data-field="titel"></label>
+        <label class="le-field">Untertitel (klein, über dem Titel)<input type="text" data-field="untertitel"></label>
+      </div>
+      <label class="le-field">Kurztext für die Kachel auf der Startseite<textarea data-field="kurz" rows="3"></textarea></label>
+      <label class="le-field">Ausführliche Beschreibung für die Leistungsseite<textarea data-field="beschreibung" rows="7"></textarea>
+        <span class="le-hint">Eine Leerzeile beginnt einen neuen Absatz.</span></label>
+
+      <div class="le-field">Stichpunkte
+        <ul class="le-points" id="points"></ul>
+        <button class="le-ghost" id="add-point" type="button">+ Stichpunkt</button>
+        <span class="le-hint" style="display:block">Am Griff ⋮⋮ ziehen, um sie umzusortieren.</span>
+      </div>
+
+      <div class="le-row">
+        <label class="le-field">Preis<input type="text" data-field="preis" placeholder="z. B. ab 290 €"></label>
+        <label class="le-field">Bildbeschreibung (für Screenreader &amp; Google)<input type="text" data-field="bildText"></label>
+      </div>
+
+      <div class="le-field">Bild
+        <div class="le-current"><img id="current-img" alt=""><span id="current-name"></span></div>
+        <details class="le-picker">
+          <summary>Anderes Bild wählen</summary>
+          <div class="le-images" id="images"></div>
+        </details>
+      </div>
+
+      <label class="le-check"><input type="checkbox" data-field="hervorheben"> Hervorheben (bronzefarbener Rahmen)</label>
+
+      <div class="le-form__foot">
+        <button class="le-ghost" id="duplicate" type="button">Duplizieren</button>
+        <button class="le-ghost le-danger" id="remove" type="button">Leistung löschen</button>
+      </div>
+    </form>
+
+    <div class="le-preview">
+      <p class="le-heading">Vorschau der Kachel</p>
+      <div id="preview"></div>
+    </div>
+  </div>
+
+  <script src="../assets/js/leistungen.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    let offers = [];
+    let saved = '';
+    let version = '';
+    let images = [];
+    let selected = 0;
+
+    const dirty = () => JSON.stringify(offers) !== saved;
+
+    function status(text, kind = '') {
+      $('status').textContent = text;
+      $('status').className = `le-status ${kind ? `is-${kind}` : ''}`;
+    }
+
+    function refreshState() {
+      const d = dirty();
+      $('save').disabled = !d;
+      $('discard').disabled = !d;
+      if (d) status('Ungespeicherte Änderungen');
+    }
+
+    // Ziehen mit Maus oder Finger am Griff, wie bei der Fotosortierung
+    function sortable(list, onDone) {
+      list.addEventListener('pointerdown', (e) => {
+        const handle = e.target.closest('.le-handle');
+        if (!handle) return;
+        const item = handle.parentElement;
+        if (item.parentElement !== list) return;
+        e.preventDefault();
+        item.classList.add('is-dragging');
+        document.body.classList.add('le-drag');
+        const move = (ev) => {
+          const others = [...list.children].filter((c) => c !== item);
+          const before = others.find((c) => {
+            const r = c.getBoundingClientRect();
+            return ev.clientY < r.top + r.height / 2;
+          });
+          if (before) { if (item.nextElementSibling !== before) list.insertBefore(item, before); }
+          else if (list.lastElementChild !== item) list.append(item);
+        };
+        const up = () => {
+          item.classList.remove('is-dragging');
+          document.body.classList.remove('le-drag');
+          removeEventListener('pointermove', move);
+          removeEventListener('pointerup', up);
+          removeEventListener('pointercancel', up);
+          onDone([...list.children].map((c) => Number(c.dataset.index)));
+        };
+        // Am Fenster lauschen: beim Verschieben im DOM verliert der Griff sonst die Maus
+        addEventListener('pointermove', move);
+        addEventListener('pointerup', up);
+        addEventListener('pointercancel', up);
+      });
+    }
+
+    function renderList() {
+      $('offers').innerHTML = offers.map((o, i) => `
+        <li class="le-offer${i === selected ? ' is-selected' : ''}" data-index="${i}">
+          <span class="le-handle" title="Ziehen zum Verschieben">⋮⋮</span>
+          <img src="/assets/img/${esc(o.bild)}-s.webp" alt="">
+          <span class="le-offer__name">${esc(o.titel) || '<em>Ohne Titel</em>'}<small>${esc(o.preis)}</small></span>
+        </li>`).join('');
+    }
+
+    function renderPreview() {
+      const o = offers[selected];
+      $('preview').innerHTML = o ? LeistungenAnzeige.card(o, 'vorschau', '/') : '';
+      $('preview').querySelectorAll('a').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
+    }
+
+    function renderPoints() {
+      const o = offers[selected];
+      $('points').innerHTML = o.punkte.map((p, i) => `
+        <li class="le-point" data-index="${i}">
+          <span class="le-handle" title="Ziehen zum Verschieben">⋮⋮</span>
+          <input type="text" value="${esc(p)}" aria-label="Stichpunkt ${i + 1}">
+          <button class="le-x" type="button" title="Stichpunkt entfernen" aria-label="Stichpunkt entfernen">×</button>
+        </li>`).join('');
+    }
+
+    function renderImage() {
+      const o = offers[selected];
+      $('current-img').src = `/assets/img/${o.bild}-s.webp`;
+      $('current-name').textContent = o.bild;
+      [...$('images').children].forEach((b) => b.classList.toggle('is-selected', b.dataset.bild === o.bild));
+    }
+
+    function renderForm() {
+      const o = offers[selected];
+      $('form').hidden = !o;
+      if (!o) return;
+      $('form').querySelectorAll('[data-field]').forEach((el) => {
+        if (el.type === 'checkbox') el.checked = !!o[el.dataset.field];
+        else el.value = o[el.dataset.field] ?? '';
+      });
+      renderPoints();
+      renderImage();
+    }
+
+    function renderAll() {
+      renderList();
+      renderForm();
+      renderPreview();
+      refreshState();
+    }
+
+    // Eingaben übernehmen
+    $('form').addEventListener('input', (e) => {
+      const o = offers[selected];
+      const field = e.target.dataset.field;
+      if (field) o[field] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+      if (e.target.closest('.le-point')) {
+        o.punkte = [...$('points').querySelectorAll('input')].map((i) => i.value);
+      }
+      renderList();
+      renderPreview();
+      refreshState();
+    });
+    $('form').addEventListener('submit', (e) => e.preventDefault());
+
+    $('points').addEventListener('click', (e) => {
+      const x = e.target.closest('.le-x');
+      if (!x) return;
+      offers[selected].punkte.splice(Number(x.parentElement.dataset.index), 1);
+      renderPoints(); renderPreview(); refreshState();
+    });
+    $('points').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); $('add-point').click(); }
+    });
+    $('add-point').addEventListener('click', () => {
+      offers[selected].punkte.push('');
+      renderPoints(); renderPreview(); refreshState();
+      const inputs = $('points').querySelectorAll('input');
+      inputs[inputs.length - 1].focus();
+    });
+    sortable($('points'), (order) => {
+      const o = offers[selected];
+      o.punkte = order.map((i) => o.punkte[i]);
+      renderPoints(); renderPreview(); refreshState();
+    });
+
+    $('offers').addEventListener('click', (e) => {
+      const item = e.target.closest('.le-offer');
+      if (!item || e.target.closest('.le-handle')) return;
+      selected = Number(item.dataset.index);
+      renderAll();
+    });
+    sortable($('offers'), (order) => {
+      const current = offers[selected];
+      offers = order.map((i) => offers[i]);
+      selected = offers.indexOf(current);
+      renderAll();
+    });
+
+    $('images').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      offers[selected].bild = b.dataset.bild;
+      renderImage(); renderList(); renderPreview(); refreshState();
+    });
+
+    $('add').addEventListener('click', () => {
+      offers.push({
+        titel: 'Neue Leistung', untertitel: '', bild: offers[0]?.bild || images[0], bildText: '',
+        kurz: '', beschreibung: '', punkte: [''], preis: 'ab … €', hervorheben: false,
+      });
+      selected = offers.length - 1;
+      renderAll();
+      $('form').querySelector('[data-field="titel"]').select();
+    });
+    $('duplicate').addEventListener('click', () => {
+      const copy = JSON.parse(JSON.stringify(offers[selected]));
+      copy.titel += ' (Kopie)';
+      offers.splice(selected + 1, 0, copy);
+      selected += 1;
+      renderAll();
+    });
+    $('remove').addEventListener('click', () => {
+      if (offers.length < 2) return status('Mindestens eine Leistung muss bleiben.', 'err');
+      if (!confirm(`„${offers[selected].titel}“ wirklich löschen? (Erst mit „Speichern“ endgültig)`)) return;
+      offers.splice(selected, 1);
+      selected = Math.min(selected, offers.length - 1);
+      renderAll();
+    });
+
+    $('discard').addEventListener('click', () => {
+      offers = JSON.parse(saved);
+      selected = Math.min(selected, offers.length - 1);
+      renderAll();
+      status('Änderungen verworfen');
+    });
+
+    async function save() {
+      if (!dirty()) return;
+      // Leere Stichpunkte nicht mitspeichern
+      offers.forEach((o) => { o.punkte = o.punkte.map((p) => p.trim()).filter(Boolean); });
+      try {
+        const res = await fetch('/__leistungen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ version, leistungen: offers }),
+        });
+        const data = await res.json();
+        if (!res.ok) { renderAll(); return status(data.error || 'Speichern fehlgeschlagen', 'err'); }
+        version = data.version;
+        saved = JSON.stringify(offers);
+        renderAll();
+        status('Gespeichert ✓  Sag Claude „hochladen“, um es online zu stellen.', 'ok');
+      } catch {
+        status('Server nicht erreichbar – läuft der Bearbeitungsmodus noch?', 'err');
+      }
+    }
+    $('save').addEventListener('click', save);
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
+    });
+    addEventListener('beforeunload', (e) => { if (dirty()) { e.preventDefault(); e.returnValue = ''; } });
+
+    (async () => {
+      try {
+        const data = await (await fetch('/__leistungen', { cache: 'no-store' })).json();
+        offers = data.leistungen;
+        version = data.version;
+        images = data.bilder;
+        saved = JSON.stringify(offers);
+        $('images').innerHTML = images.map((b) =>
+          `<button type="button" data-bild="${esc(b)}" title="${esc(b)}"><img src="/assets/img/${esc(b)}-s.webp" alt="" loading="lazy"></button>`).join('');
+        renderAll();
+        status(`${offers.length} Leistungen geladen`);
+      } catch {
+        status('Konnte die Leistungen nicht laden – läuft der Bearbeitungsmodus (tools/editor.py)?', 'err');
+      }
+    })();
+  </script>
+</body>
+</html>

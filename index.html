@@ -109,46 +109,16 @@
         </div>
       </div>
 
-      <div class="offers">
-        <article class="offer reveal">
-          <div class="offer__img"><img src="assets/img/galerie/g33-s.webp" alt="Frau umarmt lachend einen Baum im Wald" loading="lazy"></div>
-          <div class="offer__body">
-            <h3>Portrait-Auszeit</h3>
-            <p>Zwei Stunden nur für Dich. Für alle, die sich selbst wieder einmal mit liebevollen Augen sehen möchten.</p>
-            <ul>
-              <li>ca. 2 Stunden in der Natur</li>
-              <li>Vorgespräch inklusive</li>
-              <li>30+ bearbeitete Bilder</li>
-            </ul>
-            <p class="offer__price">ab … €</p>
-          </div>
-        </article>
-        <article class="offer offer--featured reveal">
-          <div class="offer__img"><img src="assets/img/galerie/g11-s.webp" alt="Zwei Menschen breiten im Herbstwald die Arme aus" loading="lazy"></div>
-          <div class="offer__body">
-            <h3>Gemeinsam</h3>
-            <p>Für Paare, Freunde, Familien – für alle, die das, was sie verbindet, sichtbar machen möchten.</p>
-            <ul>
-              <li>ca. 2–3 Stunden</li>
-              <li>Ort nach Wunsch</li>
-              <li>50+ bearbeitete Bilder</li>
-            </ul>
-            <p class="offer__price">ab … €</p>
-          </div>
-        </article>
-        <article class="offer reveal">
-          <div class="offer__img"><img src="assets/img/galerie/g25-s.webp" alt="Frau im gelben Shirt sitzt lachend auf einem Sofa" loading="lazy"></div>
-          <div class="offer__body">
-            <h3>Business mit Seele</h3>
-            <p>Für Selbstständige und Coaches, die nicht gestellt, sondern echt und nahbar auftreten möchten.</p>
-            <ul>
-              <li>Portraits &amp; Arbeitssituationen</li>
-              <li>Bilder für Website &amp; Social Media</li>
-              <li>Nutzungsrechte inklusive</li>
-            </ul>
-            <p class="offer__price">ab … €</p>
-          </div>
-        </article>
+      <div class="offers-carousel reveal" data-leistungen="karussell" role="region" aria-roledescription="Karussell" aria-label="Leistungen">
+        <div class="offers" tabindex="0"></div>
+        <div class="carousel__nav">
+          <button type="button" class="carousel__arrow carousel__arrow--prev" aria-label="Vorherige Leistung"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <div class="carousel__dots"></div>
+          <button type="button" class="carousel__arrow carousel__arrow--next" aria-label="Nächste Leistung"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
+      </div>
+      <div class="offers__all reveal">
+        <a class="btn btn--ghost" href="leistungen.html">Alle Leistungen &amp; Erlebnisse</a>
       </div>
       <div class="cta reveal">
         <p class="cta__line">Noch unsicher, was zu Dir passt? Das finden wir gemeinsam heraus.</p>
@@ -179,7 +149,7 @@
       <div class="doubts__grid">
         <article class="doubt reveal">
           <h3>„Ich bin total unfotogen.“</h3>
-          <p>Das dachte ich früher auch von mir! Vielen geht es so. Das liegt nicht an Dir, sondern oft an dem Gefühl, sich von der Kamera beobachtet zu fühlen. Wir nehmen und alle Zeit, sodass Du einfach Du sein kannst, in aller Freude, und die Kamera glatt vergessen wird.</p>
+          <p>Das dachte ich früher auch von mir! Vielen geht es so. Das liegt nicht an Dir, sondern oft an dem Gefühl, sich von der Kamera beobachtet zu fühlen. Wir nehmen uns alle Zeit, sodass Du einfach Du sein kannst, in aller Freude, und die Kamera glatt vergessen wird.</p>
         </article>
         <article class="doubt reveal">
           <h3>„Ich weiß nicht, wie ich posieren soll.“</h3>
@@ -195,7 +165,7 @@
         </article>
         <article class="doubt reveal">
           <h3>„Kann ich jemanden mitbringen?“</h3>
-          <p>Ja, gerne. Dieser Raum ist zu Deinem höchsten Wohl. Im entspannten Gespräch können wir alle Details besprechen.</p>
+          <p>Gerne, wenn Du es Dir wünschst. Dieser Raum ist zu Deinem höchsten Wohl. Im entspannten Gespräch können wir alle Details besprechen.</p>
         </article>
         <article class="doubt reveal">
           <h3>„Muss ich danach buchen?“</h3>
@@ -252,6 +222,8 @@
 
   <script src="assets/js/galerie-reihenfolge.js"></script>
   <script src="assets/js/kontakt-einstellungen.js"></script>
+  <script src="assets/js/leistungen-daten.js"></script>
+  <script src="assets/js/leistungen.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/ueberschriften-effekt.js"></script>
   <script src="assets/js/komorebi.js"></script>

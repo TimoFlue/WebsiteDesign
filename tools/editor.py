@@ -20,6 +20,10 @@ ROOT = Path(__file__).resolve().parent.parent
 PORT = 8080
 ORDER_FILE = ROOT / "assets/js/galerie-reihenfolge.js"
 ORDER_LINE = re.compile(r"const GALLERY_ORDER = (\[[^\]]*\]);")
+OFFERS_FILE = ROOT / "assets/js/leistungen-daten.js"
+OFFERS_DATA = re.compile(r"window\.LEISTUNGEN = (\[.*\]);", re.S)
+OFFER_TEXT = ("titel", "untertitel", "bild", "bildText", "kurz", "beschreibung", "preis")
+IMAGE_ID = re.compile(r"(galerie|timo)/[a-z0-9-]+")
 EDITABLE = {"h1", "h2", "h3", "p", "li", "blockquote"}
 SKIP_INSIDE = {"form", "nav", "header", "footer", "script", "button"}
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
@@ -103,6 +107,42 @@ def annotate(source):
     return html.replace("</body>", inject + "\n</body>", 1)
 
 
+def load_offers():
+    """Liest die Leistungen samt Versionskennung und der verfügbaren Bilder."""
+    source = OFFERS_FILE.read_text(encoding="utf-8")
+    images = sorted(
+        f"{f.parent.name}/{f.name[:-len('-s.webp')]}"
+        for folder in ("galerie", "timo")
+        for f in (ROOT / "assets/img" / folder).glob("*-s.webp")
+    )
+    return {
+        "version": version(source),
+        "leistungen": json.loads(OFFERS_DATA.search(source).group(1)),
+        "bilder": images,
+    }
+
+
+def check_offers(offers):
+    """Gibt eine Fehlermeldung zurück, wenn die Leistungen nicht gespeichert werden sollten."""
+    if not isinstance(offers, list) or not offers:
+        return "Es muss mindestens eine Leistung geben."
+    for n, o in enumerate(offers, 1):
+        if not isinstance(o, dict):
+            return f"Leistung {n} ist ungültig."
+        if not all(isinstance(o.get(k, ""), str) for k in OFFER_TEXT):
+            return f"Leistung {n}: ungültiger Text."
+        if not o.get("titel", "").strip():
+            return f"Leistung {n} braucht einen Titel."
+        bild = o.get("bild", "")
+        if not IMAGE_ID.fullmatch(bild) or not (ROOT / f"assets/img/{bild}-s.webp").exists():
+            return f"Leistung „{o['titel']}“: Bild nicht gefunden."
+        if not isinstance(o.get("punkte"), list) or not all(isinstance(x, str) for x in o["punkte"]):
+            return f"Leistung „{o['titel']}“: ungültige Stichpunkte."
+        if not isinstance(o.get("hervorheben"), bool):
+            return f"Leistung „{o['titel']}“: ungültige Hervorhebung."
+    return None
+
+
 def page_path(url_path):
     rel = url_path.split("?")[0].lstrip("/") or "index.html"
     if rel.endswith("/"):
@@ -122,6 +162,8 @@ class Handler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
+        if self.path.split("?")[0] == "/__leistungen":
+            return self.reply(200, load_offers())
         p = page_path(self.path)
         if p and p.exists() and p.parent != ROOT / "tools":
             body = annotate(p.read_text(encoding="utf-8")).encode()
@@ -147,12 +189,29 @@ class Handler(SimpleHTTPRequestHandler):
         print(f"Gespeichert: Reihenfolge von {len(order)} Fotos", flush=True)
         self.reply(200, {"ok": True})
 
+    def save_offers(self, data):
+        """Schreibt die Leistungen, wenn die Datei seit dem Laden unverändert ist."""
+        if data.get("version") != load_offers()["version"]:
+            return self.reply(409, {"error": "Die Leistungen wurden inzwischen geändert. Bitte Seite neu laden."})
+        offers = data.get("leistungen")
+        error = check_offers(offers)
+        if error:
+            return self.reply(400, {"error": error})
+        source = OFFERS_FILE.read_text(encoding="utf-8")
+        match = OFFERS_DATA.search(source)
+        text = json.dumps(offers, ensure_ascii=False, indent=2)
+        OFFERS_FILE.write_text(source[:match.start(1)] + text + source[match.end(1):], encoding="utf-8")
+        print(f"Gespeichert: {len(offers)} Leistungen", flush=True)
+        self.reply(200, {"ok": True, "version": load_offers()["version"]})
+
     def do_POST(self):
-        if self.path not in ("/__save", "/__order"):
+        if self.path not in ("/__save", "/__order", "/__leistungen"):
             return self.reply(404, {"error": "Unbekannt"})
         data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
         if self.path == "/__order":
             return self.save_order(data)
+        if self.path == "/__leistungen":
+            return self.save_offers(data)
         p = page_path(data.get("page", ""))
         if not p or not p.exists():
             return self.reply(400, {"error": "Seite nicht gefunden"})
